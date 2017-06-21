@@ -43,10 +43,14 @@ object Slides {
       def g(x: Int): Option[String] = ???
       def h(s: String): Double      = ???
 
-      for {
-        x <- f
-        y <- g(x)
-      } yield h(y)
+      val forComprehension: Option[Double] =
+        for {
+          x <- f
+          y <- g(x)
+        } yield h(y)
+
+      val desugared: Option[Double] =
+        f.flatMap(x => g(x).map(y => h(y)))
     }
 
   }
@@ -101,7 +105,7 @@ object Slides {
     Some(12).toRight("Error message") // Right(12)
     None.toRight("Error message")     // Left("error message")
 
-    Either.catchNonFatal(throw new Exception("!")) : Either[Throwable, Int]
+    Either.catchNonFatal(throw new Exception("!")): Either[Throwable, Int]
     // 100% scala-library
   }
 
@@ -203,6 +207,22 @@ object Slides {
     val backToEither: Either[String, Int]   = toValidated.toEither
   }
 
+  object ScreamOperator {
+    import cats.data._
+    import cats.instances.all._
+    import cats.syntax.all._
+
+    def f : (Int, String) => Double = ???
+
+    (1.valid[String] |@| "foo".valid).map(f)     // Valid(f(1, "foo"))
+    ("nope".invalid |@| "bar".valid).map(f)      // Invalid("nope")
+    (1.valid[String] |@| "nope".invalid).map(f)  // Invalid("nope")
+    ("nope".invalid |@| "nope".invalid).map(f)   // Invalid ("nopenope")
+
+    import cats.Cartesian._
+    map2(1.valid[String], "foo".valid)(f)
+  }
+
   object ValidatedFormValidation1 {
 
     import cats.data._
@@ -274,9 +294,26 @@ object Slides {
     validateName(form.name).toValidatedNel *>
       validateEmail(form.name).toValidatedNel *>
       validatePhone(form.phone).toValidatedNel *>
-      form.pure[ValidatedNel[String, ?]]
+      form.validNel
 
     // Invalid(NonEmptyList("bad name", "bad phone", "bad email"))
+  }
+
+  object FutureIntro {
+    import scala.concurrent.Future
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    def f : Future[Int] = ??? // un Int, un jour, peut-être
+
+    f.map(x => x + 1) : Future[Int]
+
+    def g : Int => Future[String] = ???
+    f.flatMap(g) : Future[String]
+
+    f.onComplete(???)
+    import scala.concurrent.Await
+    import scala.concurrent.duration.Duration
+    Await.result(f, Duration.Inf)
   }
 
   object FutureBad {
@@ -305,7 +342,6 @@ object Slides {
     import scala.concurrent.Future
     import scala.concurrent.ExecutionContext.Implicits.global
 
-
     import cats.data._
     import cats.instances.all._
     import cats.syntax.all._
@@ -314,19 +350,18 @@ object Slides {
 
     // EitherT[Future, String, X]
 
-    val successNow = EitherT.pure[Future, String, Int]( 4 )
-    val eitherNow = EitherT.fromEither[Future]( Either.left( "error" ) )
+    val fromResult = EitherT(??? : Result[Int])
+    fromResult.value : Result[Int]
 
-    val successLater = EitherT.liftT[Future, String, Int]( Future( 5 ) )
-    val errorAsLeft = Future.failed( new Exception( "!" ) ).attemptT.leftMap( _.toString )
+    val successNow = EitherT.pure[Future, String, Int](4)
+    val eitherNow  = EitherT.fromEither[Future](Either.left("error"))
 
-    def anEitherT : EitherT[Future, String, Int] = ???
-    anEitherT.value : Future[Either[String, Int]]
+    val successLater = EitherT.liftT[Future, String, Int](Future(5))
+    val errorAsLeft  = Future.failed(new Exception("!")).attemptT.leftMap(_.toString)
   }
   object EitherTUseCase {
     import scala.concurrent.Future
     import scala.concurrent.ExecutionContext.Implicits.global
-
 
     import cats.data._
     import cats.instances.all._
