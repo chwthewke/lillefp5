@@ -360,6 +360,7 @@ object Slides {
 
     val successLater = EitherT.liftT[Future, String, Int](Future(5))
     val errorAsLeft  = Future.failed(new Exception("!")).attemptT.leftMap(_.toString)
+    // Left("java.lang.Exception: !") immédiat
   }
   object EitherTUseCase {
     import scala.concurrent.Future
