@@ -1,8 +1,5 @@
 package net.chwthewke.catserrors
 
-import scala.util.Left
-import scala.util.Right
-
 object Slides {
 
   object ScalaPrimer {
@@ -26,15 +23,20 @@ object Slides {
     }
     //
 
-    def f(x: Int): String = ???
+    object OptionOperators {
 
-    Some[Int](5).map(f) // => Some(f(5))
-    None.map(f)         // => None
+      def f(x: Int): String = ???
 
-    def g(x: Int): Option[String] = ???
+      Some[Int](5).map(f) // => Some(f(5))
+      None.map(f)         // => None
 
-    Some(4).flatMap(g) // => g(4)
-    None.flatMap(g)    // => None
+      def g(x: Int): Option[String] = ???
+
+      Some(3).map(g) : Option[Option[String]]
+
+      Some(4).flatMap(g) // => g(4)
+      None.flatMap(g)    // => None
+    }
 
     //
     object ForComp {
